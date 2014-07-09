@@ -1,0 +1,48 @@
+#############################################################################
+#
+# Parameters for ChIP Sequence data analysis.
+#
+
+#
+# Input and output files
+#
+#INFILE = /home/matt/data/laura/mnasePipelineSC3/data/Sample_LL1_index10/bwaPE/LL1_index10_TAGCTT_L007.adaptercleaned.bed
+#OUTFILE = index10.denoising.nps
+
+#
+# Preprocessing
+#
+SPENAME = sacCer3
+EXTENSION = 75
+SHIFT = 37
+WANT_SORT = no
+TAG_THR = 2
+
+#
+# Wavelet denoising
+#
+WANT_DENOISE = yes
+DECOMP_LEVEL = 2
+WAVELET = coif4
+THRESHOLD_EST = heursure
+THRESHOLD_TYPE = soft
+SCALE = mln
+
+#
+# Peak finding
+#
+INTERVAL = 10
+GENOME_LEN = 12159846
+PVALUE = 1
+TAG_NUM = 18663963
+#TAG_NUM = 1e
+LOG = 2
+SLOPE = 2
+MIN_WIDTH = 80
+MAX_WIDTH = 150
+MIN_HEIGHT = 0
+#MAX_HEIGHT = 10000
+MAX_HEIGHT = 1000000000
+PEAK_INFLECTION_RATIO = 1.0
+MED_WSIZE = 10
+BIAS_RATIO = 4
