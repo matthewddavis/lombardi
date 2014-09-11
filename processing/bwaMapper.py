@@ -19,7 +19,7 @@ def getMaxCpu(max_cpu):
 
     return max_cpu
 
-def _selectFastqType(sample_metadata_dict):
+def selectFastqType(sample_metadata_dict):
     '''
     The Snyder RNA-Seq reads don't get trimmed, and so we need
     to cheat that step without breaking the rest of the code.
@@ -45,7 +45,7 @@ def mapBWA(sample_metadata_dict, max_cpu=1, remove_duplicate_reads=True):
     read_type = sample_metadata_dict['read_type']
     genome_version = sample_metadata_dict['genome_version']
 
-    trimmed_fastq_fn_dict = _selectFastqType(sample_metadata_dict)
+    trimmed_fastq_fn_dict = selectFastqType(sample_metadata_dict)
 
     # check for existing BAM file
     test_bam_fn = os.path.dirname(trimmed_fastq_fn_dict[read_type]) + '/' + 'bwa' + '/' + os.path.basename(trimmed_fastq_fn_dict[read_type]).split('.fastq')[0] + '.bam'
@@ -212,7 +212,7 @@ def indexReadsBWA(sample_metadata_dict, single_substr='R1', paired_substr='R2', 
     from glob import glob
     from multiprocessing import cpu_count
     genome_version = sample_metadata_dict['genome_version']
-    trimmed_fastq_fn_dict = _selectFastqType(sample_metadata_dict)
+    trimmed_fastq_fn_dict = selectFastqType(sample_metadata_dict)
 
     if genome_version == 'sacCer3':
         bwa_idx_prefix = 'reference/Saccharomyces_cerevisiae/UCSC/sacCer3/Sequence/BWAIndex/genome.fa'
@@ -255,7 +255,7 @@ def alignBWA(sample_metadata_dict, single_substr='R1', paired_substr='R2', max_c
     '''
     read_type = sample_metadata_dict['read_type']
     sai_fn_dict = sample_metadata_dict['sai_fn_dict']
-    trimmed_fastq_fn_dict = _selectFastqType(sample_metadata_dict)
+    trimmed_fastq_fn_dict = selectFastqType(sample_metadata_dict)
     genome_version = sample_metadata_dict['genome_version']
 
     if genome_version == 'sacCer3':
