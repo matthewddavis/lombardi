@@ -5,13 +5,6 @@ import os
 from tools import *
 from processing.sampleObjects import *
 
-def printUsage():
-    '''
-    Print the usage message for the program.
-    '''
-    logger.error("Usage:  python ./pipeline.py <sample_dir> <read_type> <genome_version>")
-    sys.exit()
-
 def processSample(sample_dir):
     '''
     '''
