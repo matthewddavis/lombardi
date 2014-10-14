@@ -85,7 +85,7 @@ if __name__ == '__main__':
     elif data_type == 'mnase':
         top_data_dir = 'data/mnaseData/'
 
-    data_dir_list = glob.glob(top_data_dir + '/Sample*/')
+    data_dir_list = glob.glob(top_data_dir + '/Sample*index1/')
 
     for data_dir in data_dir_list:
         sample_attrs_dict = {}
@@ -100,20 +100,33 @@ if __name__ == '__main__':
             attr.replace(' ', '_')
             key = key.replace('ucsc_' + track_type + '_', '')
             sample_attrs_dict[key] = attr
-        
-        if track_type == 'coverage' and data_type == 'chip':
-            sample_attrs_dict['fn'] = glob.glob(data_dir + '/FASTQ_single_sacCer3/bwa/*bedGraph')[0]
-        elif track_type == 'peaks' and data_type == 'chip':
-            sample_attrs_dict['fn'] = glob.glob(data_dir + '/FASTQ_single_sacCer3/bwa/macs/*_peaks.bed')[0]
-        elif track_type == 'peaks' and data_type == 'mnase':
-            sample_attrs_dict['fn'] = glob.glob(data_dir + '/FASTQ_paired_sacCer3/bwa/*processed.nps')[0]
-        elif track_type == 'coverage' and data_type == 'mnase':
-            sample_attrs_dict['fn'] = glob.glob(data_dir + '/FASTQ_paired_sacCer3/bwa/*bedGraph')[0]
 
-        if track_type == 'coverage':
-            sample_attrs_dict['track_type'] = 'bedGraph'
-        elif track_type == 'peaks':
-            sample_attrs_dict['track_type'] = 'bed'
+        try:
+
+            if track_type == 'coverage' and data_type == 'chip':
+                sample_attrs_dict['fn'] = glob.glob(data_dir + '/FASTQ_single_sacCer3/bwa/*bedGraph')[0]
+            elif track_type == 'peaks' and data_type == 'chip':
+                sample_attrs_dict['fn'] = glob.glob(data_dir + '/FASTQ_single_sacCer3/bwa/macs/*_peaks.bed')[0]
+            elif track_type == 'peaks' and data_type == 'mnase':
+                sample_attrs_dict['fn'] = glob.glob(data_dir + '/FASTQ_paired_sacCer3/bwa/*processed.nps')[0]
+            elif track_type == 'coverage' and data_type == 'mnase':
+                sample_attrs_dict['fn'] = glob.glob(data_dir + '/FASTQ_paired_sacCer3/bwa/*scaled.bedGraph')[0]
+            elif track_type == 'centers' and data_type == 'mnase':
+                sample_attrs_dict['fn'] = glob.glob(data_dir + '/FASTQ_paired_sacCer3/bwa/*pe_centers.bedGraph')[0]
+            elif track_type == 'density' and data_type == 'mnase':
+                sample_attrs_dict['fn'] = glob.glob(data_dir + '/FASTQ_paired_sacCer3/bwa/*pe_density.bedGraph')[0]
+
+            if track_type == 'coverage':
+                sample_attrs_dict['track_type'] = 'bedGraph'
+            elif track_type == 'centers':
+                sample_attrs_dict['track_type'] = 'bedGraph'
+            elif track_type == 'density':
+                sample_attrs_dict['track_type'] = 'bedGraph'
+            elif track_type == 'peaks':
+                sample_attrs_dict['track_type'] = 'bed'
+
+        except IndexError:
+            continue
 
         upload_file(ucsc_id, track_type, sample_attrs_dict)
 

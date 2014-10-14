@@ -508,6 +508,7 @@ class SampleContainer(dict):
                 start = int(line[1])
                 stop = int(line[2])
                 read_length = stop - start
+                #read_length = 1
                 name = str(line[3])
                 score = str(line[4])
                 strand = line[5]

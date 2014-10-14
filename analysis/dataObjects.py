@@ -71,6 +71,7 @@ class MnaseSampleDict(dict):
         self.annotateNoneChipBinding()
         self.bedGraph_fn = ''
         self.restrict_to_verified = False
+        self.chromosome_size_fn = 'reference/Saccharomyces_cerevisiae/UCSC/sacCer3/Annotation/Genes/ChromInfo.txt'
 
     def loadMetadata(self, sample_dir):
         '''
@@ -82,6 +83,55 @@ class MnaseSampleDict(dict):
         for key, value in sample_metadata_dict.items():
             setattr(self, key, value)
         self.sample_dir = sample_dir
+
+    def loadChromScoreVectorDict(self):
+        '''
+        Accepts a bedGraph filename and loads all chromosomes into float vectors
+        of the scores across the bedGraph regions.
+        '''
+
+        def _setChromosomeSizes():
+            '''
+            '''
+            self.chromosome_size_dict = {}
+            chromosome_size_fh = open(self.chromosome_size_fn)
+            for line in chromosome_size_fh:
+                line = line.strip().split('\t')
+                if line == ['']:
+                    continue
+                else:
+                    print "...%s, %s" % (line[0], line[1]) 
+                    self.chromosome_size_dict[line[0]] = int(line[1])
+
+            print "...done getting chromosome sizes."
+
+        try:
+            bg_fh = open(self.bedGraph_fn, 'r')
+        except:
+            print "Error opening bedGraph file %s." % (self.bedGraph_fn)
+
+        print "Loading bedGraph scores from %s..." % (self.bedGraph_fn)
+
+        _setChromosomeSizes()
+        chrom_score_vector_dict = {}
+
+        for chrom in self.chromosome_size_dict:
+            chrom_score_vector_dict[chrom] = np.zeros(self.chromosome_size_dict[chrom], dtype=float)
+
+        for line in bg_fh:
+            if line.startswith('track'):
+                continue
+            line = line.strip('\n').split('\t')
+            chrom = line[0]
+            start = int(line[1]) - 1  # bed format is 1-indexed
+            stop = int(line[2]) - 1
+            score = float(line[3])
+            if chrom in chrom_score_vector_dict:
+                chrom_score_vector_dict[chrom][start:stop] = score
+
+        print "\t...done."
+        self.chrom_score_vector_dict = chrom_score_vector_dict
+
 
     def makeNucsDists(self, annotated_nuc_pos_list, chip_sample_name_list=['none']):
         '''
@@ -435,8 +485,8 @@ class MnaseSampleDict(dict):
             # return False if the closest nuc doesn't qualify as any of -1,0,1
             return False
 
-    def annotateFPKM(self, fpkm_fn='snyderRNASeq/original_dt/cufflinks/genes.fpkm_tracking',\
-                         top_percent_cutoff=90.0, bottom_percent_cutoff=10.0):
+    def annotateFPKM(self, fpkm_fn='../data/snyderRNASeq/original_dt/cufflinks/genes.fpkm_tracking',
+                     top_percent_cutoff=90.0, bottom_percent_cutoff=10.0):
         '''
         '''
         fpkm_fh = open(fpkm_fn)
@@ -477,6 +527,9 @@ class MnaseSampleDict(dict):
                 self[gene]['in_set']['fpkm_bottom'] = True
             else:
                 self[gene]['in_set']['fpkm_bottom'] = False
+
+    def annotateMatchedFPKMSet(self,):
+        pass
 
 
     def annotateNoneChipBinding(self,):
@@ -736,9 +789,11 @@ class ChipDataSample(dict):
     '''
     def __init__(self, sample_dir, bed_fn_suffix):
         self.summits = []
+        self.peaks = {}
         self.regions = []
         self.sample_dir = sample_dir
         self.bed_fn_suffix = bed_fn_suffix
+        self.peaks_bed_fn = ''
         self.bedGraph_fn = glob(self.sample_dir + '/FASTQ_single_sacCer3/bwa*/*.bedGraph')[0]
         self.loadMetadata()
         self.chromosome_size_fn = 'reference/Saccharomyces_cerevisiae/UCSC/sacCer3/Annotation/Genes/ChromInfo.txt'
@@ -750,6 +805,31 @@ class ChipDataSample(dict):
         sample_metadata_dict = parseSampleMetaData(self.sample_dir)
         for key, value in sample_metadata_dict.items():
             setattr(self, key, value)
+
+    def loadPeaks(self, peaks_bed_fn_suffix):
+        print "Loading ChIP Peaks for sample %s" % (self.sample_name)
+
+        tmp = glob(self.sample_dir + '/FASTQ*/bwa/macs/*' + peaks_bed_fn_suffix)
+        if len(tmp) != 1:
+            print "Error: more than one bed file with this suffix %s" % (peaks_bed_fn_suffix)
+            return
+        
+        peaks_bed_fh = open(tmp[0])
+        for line in peaks_bed_fh:
+            if line.startswith('#'):
+                continue
+            line = line.strip().split('\t')
+            chrom = line[0]
+            start = int(line[1])
+            stop = int(line[2])
+            name = line[3]
+            score = np.float16(line[4])
+
+            self.peaks[name] = {'chrom' : chrom, 
+                                'start' : start, 
+                                'stop' : stop, 
+                                'score' : score,
+                                }
 
     def loadSummits(self):
         '''
@@ -775,29 +855,6 @@ class ChipDataSample(dict):
                 continue
             line = line.strip().split('\t')
             chrom = line[0]
-            # old MACS without subpeaks
-            ##if self.bed_fn == 'a.oldmacs_summits':
-            ##   summit = int(line[1])
-            ##   score = float(line[4])
-            # old MACS with subpeaks
-            ##elif self.bed_fn == 'subpeaks.oldmacs_peaks':
-            ##    summit = int(line[4])
-            ##    score = float(line[3])
-            # new MACS without subpeaks
-            ##elif self.bed_fn == 'newmacs_summits':
-            ##    summit = int(line[1])
-            ##    score = float(line[4])
-            # new MACS with subpeaks
-            ##elif self.bed_fn == 'subpeaks.newmacs_peaks':
-            ##    summit = int(line[4])
-            ##    score = float(line[3])
-            # old MACS without subpeaks without control file
-            ##elif self.bed_fn == 'oldmacs.nullmodel_summits':
-            ##    summit = int(line[1])
-            ##    score = float(line[4])
-            ##elif self.bed_fn == 'macs/*summits':
-            ##    summit = int(line[1])
-            ##    score = float(line[4])
             if self.bed_fn_suffix == '_summits.bed':
                 summit = int(line[1])
                 score = float(line[4])
@@ -885,7 +942,7 @@ def loadAnnotatedNucsData(annotated_nuc_pos_list, sample_name_list, mnaseDataSam
         Load sample metadata into the mnaseDataSample.
         '''
         def _loadBedGraph():
-            bedGraph_fn_list = glob(sample_dir + '/FASTQ*/bwa/*.bedGraph')
+            bedGraph_fn_list = glob(sample_dir + '/FASTQ*/bwa/*scaled.bedGraph')
             #bedGraph_fn_list = glob(sample_dir + '/bwa*/*.bedGraph')
             assert len(bedGraph_fn_list) == 1
             mnaseDataSample.bedGraph_fn = bedGraph_fn_list[0]

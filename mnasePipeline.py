@@ -9,13 +9,6 @@ from processing.runNPS import *
 from tools import *
 from processing.sampleObjects import *
 
-def printUsage():
-    '''
-    Print the usage message for the program.
-    '''
-    logger.error("Usage:  python ./pipeline.py <sample_dir> <read_type> <genome_version>")
-    sys.exit()
-
 def processSample(sample_dir):
     '''
     '''    
@@ -64,8 +57,8 @@ def runSamples(sample_dir_list, max_cpu=1):
 
 if __name__ == '__main__':
 
-    runSamples(sample_dir_list=glob('data/mnaseData/Sample_LL1_index*'), max_cpu=4)
-    #processSample(sample_dir='data/mnaseData/Sample_LL1_index11/')
+    #runSamples(sample_dir_list=glob('data/mnaseData/Sample_LL1_index*'), max_cpu=4)
+    processSample(sample_dir='data/mnaseTest/Sample_LL1_index99/')
 
 
 
